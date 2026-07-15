@@ -20,6 +20,9 @@ try:
     import webview
     import pystray
     from PIL import Image, ImageDraw
+    # Windows 任务栏图标：设独立 AppUserModelID，避免被归到 python.exe
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ruichou.opencodegoswitch")
 except Exception as e:
     log_error(f"导入失败: {e}\n{traceback.format_exc()}")
     raise
@@ -155,6 +158,7 @@ def main():
             min_size=(600, 450),
             resizable=True,
             confirm_close=True,
+            icon=str(BASE_DIR / "icon.ico"),
         )
         window_ref = window
         window.events.closing += on_closing
