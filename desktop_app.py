@@ -84,6 +84,60 @@ def get_icon_image():
     return img
 
 
+# ── Windows 窗口图标设置 ───────────────────────────────
+def set_window_icon():
+    """用 Windows API 给窗口标题栏和任务栏设图标"""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        WM_SETICON = 0x80
+        ICON_SMALL = 0
+        ICON_BIG = 1
+        LR_LOADFROMFILE = 0x00000040
+        IMAGE_ICON = 1
+
+        ico_path = str(BASE_DIR / "icon.ico")
+        if not os.path.exists(ico_path):
+            return
+
+        # 加载图标
+        hicon = user32.LoadImageW(
+            0, ico_path, IMAGE_ICON, 32, 32, LR_LOADFROMFILE
+        )
+        if not hicon:
+            return
+
+        # 通过 EnumWindows 找标题匹配窗口
+        found = [None]
+        EnumWindowsProc = ctypes.WINFUNCTYPE(
+            wintypes.BOOL, wintypes.HWND, wintypes.LPARAM
+        )
+
+        def cb(hwnd, _):
+            buf = ctypes.create_unicode_buffer(256)
+            user32.GetWindowTextW(hwnd, buf, 256)
+            if "OpenCode Go Switch" in buf.value:
+                found[0] = hwnd
+                return False
+            return True
+
+        user32.EnumWindows(EnumWindowsProc(cb), 0)
+        if found[0]:
+            user32.SendMessageW(found[0], WM_SETICON, ICON_SMALL, hicon)
+            user32.SendMessageW(found[0], WM_SETICON, ICON_BIG, hicon)
+    except Exception as e:
+        log_error(f"设图标失败: {e}")
+
+
+def icon_setter_thread():
+    """等窗口显示出来再设图标"""
+    time.sleep(1.5)
+    set_window_icon()
+
+
+
 # ── 系统托盘 ───────────────────────────────────────────
 def on_tray_show(icon, item):
     global window_ref
@@ -158,11 +212,13 @@ def main():
             min_size=(600, 450),
             resizable=True,
             confirm_close=True,
-            icon=str(BASE_DIR / "icon.ico"),
         )
         window_ref = window
         window.events.closing += on_closing
         window.events.closed += on_closed
+
+        # 窗口显示后设图标（pywebview 6.x 不支持 create_window(icon=)）
+        threading.Thread(target=icon_setter_thread, daemon=True).start()
 
         log_error("窗口已启动")
         webview.start(gui="edgechromium", http_server=True)
