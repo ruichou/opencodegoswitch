@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs & debug
+*.log
+debug.log
+gui_error.log
+
+# Sensitive config
+config.json
+
+# Test artifacts
+last_codex_body.json
+last_request.json
+test.json
+
+# Desktop assets (generated)
+icon.ico
+
+# OS
+.DS_Store
+Thumbs.db
+*.lnk

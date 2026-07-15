@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCode Go Switch</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --surface: #ffffff;
+    --border: #dee2e6;
+    --text: #212529;
+    --text-secondary: #6c757d;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  header p {
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-size: 14px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h3 .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge-success { background: #d1fae5; color: #065f46; }
+  .badge-warning { background: #fef3c7; color: #92400e; }
+  .badge-danger  { background: #fee2e2; color: #991b1b; }
+
+  /* Form elements */
+  .form-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  input[type="text"], input[type="password"], select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+  .btn-primary:hover {
+    background: var(--primary-hover);
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover {
+    background: var(--bg);
+  }
+  .btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  /* Model grid */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .model-card {
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .model-card:hover {
+    border-color: var(--primary);
+    background: #f5f3ff;
+  }
+  .model-card.active {
+    border-color: var(--primary);
+    background: #ede9fe;
+  }
+  .model-card .model-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .model-card .model-slug {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    font-family: "SF Mono", "Fira Code", monospace;
+  }
+  .model-card .model-group {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    padding: 2px 6px;
+    background: var(--bg);
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .model-card .active-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--success);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+  }
+  .model-card.active .active-check {
+    display: flex;
+  }
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Code block */
+  .code-block {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .code-block .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    font-size: 11px;
+    background: #334155;
+    color: #cbd5e1;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .code-block .copy-btn:hover {
+    background: #475569;
+  }
+  .code-block .copied {
+    background: var(--success);
+    color: white;
+  }
+
+  /* Status strip */
+  .status-strip {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .dot-green { background: var(--success); }
+  .dot-red { background: var(--danger); }
+  .dot-yellow { background: var(--warning); }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .tab {
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .endpoint-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .endpoint-row .method {
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    width: 40px;
+    text-align: center;
+  }
+  .method-post { background: #dbeafe; color: #1e40af; }
+  .method-get  { background: #d1fae5; color: #065f46; }
+  .endpoint-row .url {
+    font-family: monospace;
+    font-size: 12px;
+  }
+  .endpoint-row .desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: auto;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .model-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .form-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>OpenCode Go Switch</h1>
+  <p>本地代理 · 模型切换 · Codex &amp; Claude Code 接入</p>
+</header>
+
+<!-- Status Card -->
+<div class="card" id="status-card">
+  <h3>服务状态</h3>
+  <div class="status-strip">
+    <div class="status-item">
+      <span class="status-dot dot-green" id="status-proxy"></span>
+      <span>代理运行中</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-red" id="status-apikey"></span>
+      <span id="status-apikey-text">未配置 API Key</span>
+    </div>
+    <div class="status-item" style="margin-left:auto;">
+      <span id="status-model">当前: —</span>
+    </div>
+  </div>
+</div>
+
+<!-- API Key Card -->
+<div class="card">
+  <h3>
+    API Key
+    <span class="badge badge-danger" id="apikey-badge" style="display:none">未配置</span>
+    <span class="badge badge-success" id="apikey-ok-badge" style="display:none">已配置</span>
+  </h3>
+  <div class="form-row">
+    <input type="password" id="apikey-input" placeholder="粘贴你的 OpenCode Go API Key...">
+    <button class="btn-primary" onclick="saveApiKey()">保存</button>
+    <button class="btn-outline" onclick="clearApiKey()">清除</button>
+  </div>
+  <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+    在 <a href="https://opencode.ai/auth" target="_blank" style="color:var(--primary)">opencode.ai/auth</a> 登录后复制 API Key
+  </p>
+</div>
+
+<!-- Model Selector -->
+<div class="card" style="border: 2px solid var(--primary); background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);">
+  <h3>
+    模型选择
+    <span class="badge badge-success" id="model-count" style="font-size:11px">13 个模型</span>
+  </h3>
+  <p style="font-size:12px;color:var(--primary);margin-bottom:12px;font-weight:500;">
+    ⚡ 点击切换即时生效 — 无需改任何配置文件！
+  </p>
+
+  <div class="section-label">Chat Completions 端 (OpenAI 格式) — Codex / Claude Code 通用</div>
+  <div class="model-grid" id="chat-models"></div>
+
+  <div class="section-label">Anthropic Messages 端 (Claude 格式) — 仅限 Claude Code</div>
+  <div class="model-grid" id="anthropic-models"></div>
+
+  <div id="toast" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#10b981;color:white;padding:12px 24px;border-radius:8px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:all 0.3s;"></div>
+</div>
+
+<!-- Configuration Tabs -->
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('codex')">Codex 配置</button>
+    <button class="tab" onclick="switchTab('claude')">Claude Code 配置</button>
+    <button class="tab" onclick="switchTab('endpoints')">API 端点</button>
+  </div>
+
+  <!-- Codex Tab -->
+  <div class="tab-content active" id="tab-codex">
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+      首次使用时，点击下方按钮自动写入 Codex 配置。<br>
+      <strong style="color:var(--primary);">日常切换模型只需在上方模型列表点击即可，不用动这里。</strong>
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn-primary" onclick="applyCodex()" id="btn-apply-codex">一键应用到 Codex</button>
+      <span id="apply-codex-msg" style="font-size:12px;align-self:center;"></span>
+    </div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+      或手动复制以下配置到 <code>~/.codex/config.toml</code>：
+    </p>
+    <div class="code-block">
+<button class="copy-btn" onclick="copyCode('codex-config')">复制</button>
+<pre id="codex-config">model_provider = "opencode-go-switch"
+model = "<span class="model-placeholder">deepseek-v4-pro</span>"
+model_reasoning_effort = "medium"
+disable_response_storage = true
+network_access = "enabled"
+windows_wsl_setup_acknowledged = true
+
+[model_providers.opencode-go-switch]
+name = "OpenCode Go (via Switch)"
+base_url = "http://127.0.0.1:<span class="port-placeholder">7878</span>/v1"
+wire_api = "responses"
+requires_openai_auth = true
+
+[features]
+js_repl = false
+
+[desktop]
+followUpQueueMode = "queue"</pre>
+    </div>
+  </div>
+
+  <!-- Claude Code Tab -->
+  <div class="tab-content" id="tab-claude">
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+      首次使用时，点击下方按钮生成配置脚本。<br>
+      <strong style="color:var(--primary);">日常切换模型只需在上方模型列表点击即可。</strong>
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn-primary" onclick="applyClaude()" id="btn-apply-claude">一键生成 Claude Code 配置脚本</button>
+      <span id="apply-claude-msg" style="font-size:12px;align-self:center;"></span>
+    </div>
+
+    <h4 style="font-size:14px;margin:12px 0 8px;">方案 A：运行生成的脚本 (推荐)</h4>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">
+      点击上方按钮后，桌面会生成 <code>claude-code-opencode.ps1</code>，在 VS Code 终端中执行即可。
+    </p>
+
+    <h4 style="font-size:14px;margin:12px 0 8px;">方案 B：手动设置环境变量</h4>
+    <div class="code-block">
+<button class="copy-btn" onclick="copyCode('claude-env')">复制</button>
+<pre id="claude-env"># Windows PowerShell
+$env:ANTHROPIC_BASE_URL="http://127.0.0.1:<span class="port-placeholder">7878</span>/v1"
+$env:ANTHROPIC_API_KEY="opencode-go-switch"</pre>
+    </div>
+
+    <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+      注意：MiniMax / Qwen 模型走 Anthropic 直通，DeepSeek / GLM / Kimi / MiMo 走自动格式转换。
+    </p>
+  </div>
+
+  <!-- Endpoints Tab -->
+  <div class="tab-content" id="tab-endpoints">
+    <div class="endpoint-row">
+      <span class="method method-post">POST</span>
+      <span class="url" id="ep-responses">http://127.0.0.1:7878/v1/responses</span>
+      <span class="desc">→ Codex</span>
+    </div>
+    <div class="endpoint-row">
+      <span class="method method-post">POST</span>
+      <span class="url" id="ep-messages">http://127.0.0.1:7878/v1/messages</span>
+      <span class="desc">→ Claude Code</span>
+    </div>
+    <div class="endpoint-row">
+      <span class="method method-post">POST</span>
+      <span class="url" id="ep-chat">http://127.0.0.1:7878/v1/chat/completions</span>
+      <span class="desc">→ 直通 Chat API</span>
+    </div>
+    <div class="endpoint-row">
+      <span class="method method-get">GET</span>
+      <span class="url" id="ep-models">http://127.0.0.1:7878/v1/models</span>
+      <span class="desc">→ 模型列表</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────
+const CHAT_MODELS = [
+  {id:"deepseek-v4-pro",   name:"DeepSeek V4 Pro"},
+  {id:"deepseek-v4-flash", name:"DeepSeek V4 Flash"},
+  {id:"glm-5.2",           name:"GLM-5.2"},
+  {id:"glm-5.1",           name:"GLM-5.1"},
+  {id:"kimi-k2.7-code",    name:"Kimi K2.7 Code"},
+  {id:"kimi-k2.6",         name:"Kimi K2.6"},
+  {id:"mimo-v2.5",         name:"MiMo V2.5"},
+  {id:"mimo-v2.5-pro",     name:"MiMo V2.5 Pro"},
+];
+const ANTHROPIC_MODELS = [
+  {id:"minimax-m3",     name:"MiniMax M3"},
+  {id:"minimax-m2.7",   name:"MiniMax M2.7"},
+  {id:"minimax-m2.5",   name:"MiniMax M2.5"},
+  {id:"qwen3.7-max",    name:"Qwen3.7 Max"},
+  {id:"qwen3.7-plus",   name:"Qwen3.7 Plus"},
+  {id:"qwen3.6-plus",   name:"Qwen3.6 Plus"},
+];
+
+let currentModel = "deepseek-v4-pro";
+let port = 7878;
+
+// ── Init ──────────────────────────────────────────────
+async function init() {
+  try {
+    const resp = await fetch("/api/config");
+    const cfg = await resp.json();
+    currentModel = cfg.current_model;
+    port = cfg.port;
+
+    // API Key status
+    if (cfg.has_api_key) {
+      document.getElementById("apikey-input").placeholder = cfg.api_key_masked;
+      document.getElementById("status-apikey").className = "status-dot dot-green";
+      document.getElementById("status-apikey-text").textContent = "API Key 已配置 (" + cfg.api_key_masked + ")";
+      document.getElementById("apikey-badge").style.display = "none";
+      document.getElementById("apikey-ok-badge").style.display = "inline";
+    } else {
+      document.getElementById("apikey-badge").style.display = "inline";
+    }
+
+    document.getElementById("status-model").textContent = "当前模型: " + currentModel;
+
+    renderModels();
+    updatePlaceholders();
+  } catch(e) {
+    console.error("Failed to load config:", e);
+  }
+}
+
+function renderModels() {
+  const chatGrid = document.getElementById("chat-models");
+  const anthroGrid = document.getElementById("anthropic-models");
+
+  chatGrid.innerHTML = CHAT_MODELS.map(m => modelCard(m)).join("");
+  anthroGrid.innerHTML = ANTHROPIC_MODELS.map(m => modelCard(m)).join("");
+
+  document.getElementById("model-count").textContent =
+    (CHAT_MODELS.length + ANTHROPIC_MODELS.length) + " 个模型";
+}
+
+function modelCard(model) {
+  const isActive = model.id === currentModel;
+  return `
+    <div class="model-card ${isActive ? 'active' : ''}"
+         onclick="selectModel('${model.id}')">
+      <div class="active-check">✓</div>
+      <div class="model-name">${model.name}</div>
+      <div class="model-slug">${model.id}</div>
+    </div>`;
+}
+
+// ── Actions ───────────────────────────────────────────
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.background = isError ? "#ef4444" : "#10b981";
+  t.style.display = "block";
+  t.style.opacity = "1";
+  setTimeout(() => { t.style.opacity = "0"; setTimeout(() => t.style.display = "none", 300); }, 2500);
+}
+
+async function selectModel(modelId) {
+  try {
+    const resp = await fetch("/api/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({current_model: modelId}),
+    });
+    const data = await resp.json();
+    if (data.status === "ok") {
+      currentModel = modelId;
+      renderModels();
+      document.getElementById("status-model").textContent = "当前模型: " + modelId;
+      updatePlaceholders();
+      const modelName = [...CHAT_MODELS, ...ANTHROPIC_MODELS].find(m => m.id === modelId)?.name || modelId;
+      showToast("已切换到: " + modelName + " (即时生效)");
+    }
+  } catch(e) {
+    showToast("切换失败: " + e.message, true);
+  }
+}
+
+async function applyCodex() {
+  const btn = document.getElementById("btn-apply-codex");
+  const msg = document.getElementById("apply-codex-msg");
+  btn.disabled = true;
+  btn.textContent = "正在写入...";
+  msg.textContent = "";
+  try {
+    const resp = await fetch("/api/apply-codex", { method: "POST" });
+    const data = await resp.json();
+    if (data.status === "ok") {
+      msg.innerHTML = '<span style="color:#10b981">配置已写入!</span> 请重启 Codex 桌面版。';
+      showToast("Codex 配置已写入，重启 Codex 生效");
+    } else {
+      msg.innerHTML = '<span style="color:#ef4444">写入失败: ' + (data.detail || data.message || JSON.stringify(data)) + '</span>';
+    }
+  } catch(e) {
+    msg.innerHTML = '<span style="color:#ef4444">网络错误: ' + e.message + '</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = "一键应用到 Codex";
+}
+
+async function applyClaude() {
+  const btn = document.getElementById("btn-apply-claude");
+  const msg = document.getElementById("apply-claude-msg");
+  btn.disabled = true;
+  btn.textContent = "正在生成...";
+  msg.textContent = "";
+  try {
+    const resp = await fetch("/api/apply-claude", { method: "POST" });
+    const data = await resp.json();
+    if (data.status === "ok") {
+      msg.innerHTML = '<span style="color:#10b981">已生成!</span> 桌面上的 claude-code-opencode.ps1 在 VS Code 终端运行即可。';
+      showToast("Claude Code 配置脚本已生成到桌面");
+    } else {
+      msg.innerHTML = '<span style="color:#ef4444">生成失败</span>';
+    }
+  } catch(e) {
+    msg.innerHTML = '<span style="color:#ef4444">错误: ' + e.message + '</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = "一键生成 Claude Code 配置脚本";
+}
+
+async function saveApiKey() {
+  const key = document.getElementById("apikey-input").value.trim();
+  if (!key) return;
+
+  try {
+    const resp = await fetch("/api/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({api_key: key}),
+    });
+    const data = await resp.json();
+    if (data.status === "ok") {
+      document.getElementById("apikey-input").value = "";
+      document.getElementById("apikey-input").placeholder = data.api_key_masked;
+      document.getElementById("status-apikey").className = "status-dot dot-green";
+      document.getElementById("status-apikey-text").textContent = "API Key 已配置 (" + data.api_key_masked + ")";
+      document.getElementById("apikey-badge").style.display = "none";
+      document.getElementById("apikey-ok-badge").style.display = "inline";
+    }
+  } catch(e) {
+    alert("保存失败: " + e.message);
+  }
+}
+
+async function clearApiKey() {
+  if (!confirm("确定清除 API Key？")) return;
+  try {
+    await fetch("/api/config", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({api_key: ""}),
+    });
+    document.getElementById("apikey-input").placeholder = "粘贴你的 OpenCode Go API Key...";
+    document.getElementById("status-apikey").className = "status-dot dot-red";
+    document.getElementById("status-apikey-text").textContent = "未配置 API Key";
+    document.getElementById("apikey-badge").style.display = "inline";
+    document.getElementById("apikey-ok-badge").style.display = "none";
+  } catch(e) {
+    alert("清除失败: " + e.message);
+  }
+}
+
+function updatePlaceholders() {
+  document.querySelectorAll(".model-placeholder").forEach(el => {
+    el.textContent = currentModel;
+  });
+  document.querySelectorAll(".port-placeholder").forEach(el => {
+    el.textContent = port;
+  });
+  // Update endpoint URLs
+  document.getElementById("ep-responses").textContent = `http://127.0.0.1:${port}/v1/responses`;
+  document.getElementById("ep-messages").textContent = `http://127.0.0.1:${port}/v1/messages`;
+  document.getElementById("ep-chat").textContent = `http://127.0.0.1:${port}/v1/chat/completions`;
+  document.getElementById("ep-models").textContent = `http://127.0.0.1:${port}/v1/models`;
+}
+
+// ── Tab Switching ─────────────────────────────────────
+function switchTab(tabName) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add("active");
+  document.getElementById("tab-" + tabName).classList.add("active");
+}
+
+// ── Copy ──────────────────────────────────────────────
+async function copyCode(id) {
+  const el = document.getElementById(id);
+  const text = el.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = el.previousElementSibling;
+    btn.textContent = "已复制!";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = "复制";
+      btn.classList.remove("copied");
+    }, 2000);
+  } catch {
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    alert("已复制到剪贴板");
+  }
+}
+
+// ── Start ─────────────────────────────────────────────
+init();
+</script>
+
+</body>
+</html>

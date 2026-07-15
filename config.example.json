@@ -1,0 +1,7 @@
+{
+  "api_key": "sk-YOUR-OPECODE-GO-API-KEY",
+  "current_model": "kimi-k2.6",
+  "current_anthropic_model": "minimax-m3",
+  "port": 7878,
+  "host": "127.0.0.1"
+}

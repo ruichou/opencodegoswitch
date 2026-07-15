@@ -1,0 +1,1 @@
+powershell -WindowStyle Hidden -Command "Start-Process -FilePath 'C:\Users\34632\.workbuddy\binaries\python\envs\default\Scripts\pythonw.exe' -ArgumentList 'C:\Users\34632\WorkBuddy\2026-07-14-13-32-12\opencode-go-switch\desktop_app.py' -WorkingDirectory 'C:\Users\34632\WorkBuddy\2026-07-14-13-32-12\opencode-go-switch' -WindowStyle Hidden"
